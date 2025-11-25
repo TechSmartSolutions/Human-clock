@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Day Progress</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #020617;
+      color: #e5e7eb;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+    }
+
+    .container {
+      width: min(900px, 95vw);
+      padding: 24px 28px;
+      background: #020617;
+      border-radius: 20px;
+      box-shadow: 0 24px 50px rgba(0, 0, 0, 0.65);
+      border: 1px solid #1f2937;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 14px;
+    }
+
+    .title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #9ca3af;
+    }
+
+    .percent-header {
+      font-size: 0.9rem;
+      color: #9ca3af;
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    .bar-wrapper {
+      margin-top: 34px;
+      background: #020617;
+      border-radius: 999px;
+      position: relative;
+      border: 1px solid #1f2937;
+      overflow: visible;
+    }
+
+    .bar-bg {
+      position: relative;
+      width: 100%;
+      height: 24px;
+      border-radius: 999px;
+      background: linear-gradient(
+        90deg,
+        #020617 0%,
+        #020617 12.5%,
+        #22c55e 12.5%,
+        #22c55e 30%,
+        #0ea5e9 50%,
+        #6366f1 70%,
+        #f97316 83.33%,
+        #111827 83.33%,
+        #111827 100%
+      );
+      overflow: hidden;
+    }
+
+    .past-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 100%;
+      width: 0%;
+      background: rgba(15, 23, 42, 0.55);
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .current-line {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: #e5e7eb;
+      box-shadow: 0 0 8px rgba(248, 250, 252, 0.7);
+      transform: translateX(-50%);
+      z-index: 2;
+    }
+
+    .time-indicator {
+      position: absolute;
+      top: -34px;
+      transform: translateX(-50%);
+      padding: 4px 10px;
+      background: #0f172a;
+      color: #f9fafb;
+      font-size: 0.82rem;
+      font-weight: 600;
+      border-radius: 8px;
+      white-space: nowrap;
+      pointer-events: none;
+      border: 1px solid #334155;
+      z-index: 3;
+    }
+
+    .time-indicator::after {
+      content: "";
+      position: absolute;
+      bottom: -6px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 0;
+      height: 0;
+      border-left: 6px solid transparent;
+      border-right: 6px solid transparent;
+      border-top: 6px solid #0f172a;
+    }
+
+    .bar-labels {
+      position: relative;
+      margin-top: 12px;
+      height: 34px;
+      font-size: 0.82rem;
+      color: #9ca3af;
+    }
+
+    .tick {
+      position: absolute;
+      top: 0;
+      transform: translateX(-50%);
+      text-align: center;
+    }
+
+    .tick strong {
+      display: block;
+      font-weight: 500;
+      color: #e5e7eb;
+    }
+
+    .tick span {
+      display: block;
+      font-size: 0.74rem;
+      color: #6b7280;
+    }
+
+    .legend {
+      margin-top: 12px;
+      font-size: 0.85rem;
+      color: #6b7280;
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    /* Widgets grid */
+    .grid {
+      margin-top: 26px;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 24px 30px;
+    }
+
+    @media (max-width: 720px) {
+      .grid {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    }
+
+    .card {
+      background: #020617;
+      border-radius: 18px;
+      border: 1px solid #1f2937;
+      padding: 22px 24px;
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+
+    .card h2 {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #9ca3af;
+      margin: 0 0 12px;
+    }
+
+    .card ul,
+    .card ol,
+    .card p {
+      margin-top: 10px;
+    }
+
+    #futureList {
+      list-style: disc;
+      margin: 6px 0 0 20px;
+      padding: 0;
+    }
+
+    #futureList li {
+      margin-bottom: 6px;
+      color: #e5e7eb;
+    }
+
+    .card-hint {
+      margin-top: 10px;
+      font-size: 0.8rem;
+      color: #6b7280;
+    }
+
+    .rule-main {
+      font-weight: 600;
+      color: #e5e7eb;
+      margin: 4px 0 6px;
+    }
+
+    .rule-sub {
+      font-size: 0.84rem;
+      color: #9ca3af;
+    }
+
+    .card ol {
+      margin-left: 20px;
+    }
+
+    .card ol li {
+      margin-bottom: 6px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <div class="header">
+      <div class="title">
+        <span id="headerDate">Nov 23 2025</span> | Day progress
+      </div>
+      <div id="percentHeader" class="percent-header">0% of awake day</div>
+    </div>
+
+    <div class="bar-wrapper">
+      <div id="timeIndicator" class="time-indicator">--:-- --</div>
+      <div id="currentLine" class="current-line"></div>
+
+      <div class="bar-bg">
+        <div id="pastOverlay" class="past-overlay"></div>
+      </div>
+    </div>
+
+    <div class="bar-labels">
+      <div class="tick" style="left: 12.5%;">
+        <strong>03:00</strong><span>wake</span>
+      </div>
+      <div class="tick" style="left: 25%;">
+        <strong>06:00</strong><span>work</span>
+      </div>
+      <div class="tick" style="left: 66.67%;">
+        <strong>16:00</strong><span>home</span>
+      </div>
+      <div class="tick" style="left: 83.33%;">
+        <strong>20:00</strong><span>bed</span>
+      </div>
+    </div>
+
+    <div class="legend">
+      <span id="bedInfo">Time until bed: --h --m</span>
+      <span id="workInfo">Workday status: --</span>
+    </div>
+
+    <div class="grid">
+      <!-- Future you -->
+      <div class="card">
+        <h2>Do something for future you…</h2>
+        <ul id="futureList"></ul>
+        <p class="card-hint">Just pick one. Tiny is enough.</p>
+      </div>
+
+      <!-- Today's rule -->
+      <div class="card">
+        <h2>Today's rule</h2>
+        <p id="ruleMain" class="rule-main">Respond, don’t react.</p>
+        <p id="ruleSub" class="rule-sub">
+          When you feel triggered, pause before speaking and answer slower than you want to.
+        </p>
+      </div>
+
+      <!-- Calm protocol -->
+      <div class="card">
+        <h2>Calm protocol</h2>
+        <ol>
+          <li>Close your mouth. Don’t respond yet.</li>
+          <li>Breathe out slowly 4 times.</li>
+          <li>Don’t defend yourself for 30 seconds.</li>
+          <li>If still flooded, step away for 1 minute.</li>
+        </ol>
+        <p class="card-hint">Use this once today when you notice yourself spiking.</p>
+      </div>
+
+      <!-- Threat filter -->
+      <div class="card">
+        <h2>Threat filter</h2>
+        <p id="threatMain" class="rule-main">Most things are not about you.</p>
+        <p id="threatSub" class="rule-sub">
+          When your brain says “they’re taking advantage of me,” ask:
+          “What else could this mean that isn’t an attack?”
+        </p>
+      </div>
+    </div>
+
+  </div>
+
+<script>
+  const WAKE_START_HOUR = 3;
+  const WAKE_END_HOUR   = 20;
+  const WORK_START_HOUR = 6;
+  const WORK_END_HOUR   = 16;
+
+  const SECONDS_IN_DAY  = 86400;
+  const SECONDS_IN_HOUR = 3600;
+
+  const wakeStartSeconds = WAKE_START_HOUR * SECONDS_IN_HOUR;
+  const wakeEndSeconds   = WAKE_END_HOUR   * SECONDS_IN_HOUR;
+  const awakeSpanSeconds = wakeEndSeconds - wakeStartSeconds;
+
+  const workStartSeconds = WORK_START_HOUR * SECONDS_IN_HOUR;
+  const workEndSeconds   = WORK_END_HOUR   * SECONDS_IN_HOUR;
+
+  const BED_WARNING_SECONDS = 30 * 60;
+
+  const FUTURE_YOU_SUGGESTIONS = [
+    "Clear a small patch of your desk (the size of a sheet of paper).",
+    "Put 5 things in the trash or donation box.",
+    "Lay out tomorrow’s clothes somewhere easy to see.",
+    "Refill your water bottle and put it where you’ll see it in the morning.",
+    "Put one annoying object back where it belongs.",
+    "Empty one small bin (desk / bathroom / bedroom).",
+    "Prep tomorrow’s coffee/tea stuff so it’s ready.",
+    "Wipe the surface you look at most.",
+    "Remove 3 useless things from any drawer.",
+    "Fold or hang 5 pieces of clothing.",
+    "Clear the part of the kitchen counter you use the most.",
+    "Set out a clean mug for tomorrow.",
+    "Write a 1-line reminder for tomorrow.",
+    "Charge a device you always forget to charge.",
+    "Put important mail in one dedicated spot.",
+    "Close all tabs except the ones you actually need tomorrow.",
+    "Move something trippable out of a walkway.",
+    "Prep something for breakfast tomorrow.",
+    "Take out any garbage bag that’s full.",
+    "Pick one area to leave intentionally calm tonight.",
+    "Move one task from your brain onto paper.",
+    "Pick 3 songs for a short ‘reset’ playlist.",
+    "Put a glass of water by your bed.",
+    "Set a reminder for something you keep forgetting.",
+    "Choose 1 thing to do tomorrow to help yourself.",
+    "Put chargers where you actually use your devices.",
+    "Clear the area directly in front of your screen.",
+    "Put one thing that belongs in another room… in that room."
+  ];
+
+  const RULES = [
+    {
+      main: "Respond, don’t react.",
+      sub: "When you feel triggered, pause before speaking and answer slower than you want to."
+    },
+    {
+      main: "Assume clumsy, not cruel.",
+      sub: "Start with: they might be sloppy or distracted, not malicious."
+    },
+    {
+      main: "You don’t have to fix it right now.",
+      sub: "If your brain screams “fix this,” give yourself permission to park it for later."
+    },
+    {
+      main: "Ask one question before you judge.",
+      sub: "Instead of snapping, try: “Can you clarify what you meant by that?”"
+    },
+    {
+      main: "Tired = no big conversations.",
+      sub: "If you’re wiped, don’t start heavy talks. Protect future you from cleanup."
+    },
+    {
+      main: "Short messages beat long rants.",
+      sub: "If you’re emotional, send fewer words, not more. Clarity over venting."
+    },
+    {
+      main: "Silence is a valid response.",
+      sub: "You’re allowed to say: “I’ll answer later.” That’s not weakness."
+    }
+  ];
+
+  const THREAT_FILTERS = [
+    {
+      main: "Most things are not about you.",
+      sub: "When your brain says “they’re targeting me,” ask: “What else could this mean that isn’t an attack?”"
+    },
+    {
+      main: "Check: threat or inconvenience?",
+      sub: "Annoying is not the same as dangerous. Treat it like a small glitch, not a war."
+    },
+    {
+      main: "People are busy, not plotting.",
+      sub: "Short replies or forgetfulness usually mean overloaded, not evil."
+    },
+    {
+      main: "You see patterns faster than others.",
+      sub: "That doesn’t make them stupid or fake. You’re ahead — explain, don’t punish."
+    },
+    {
+      main: "Feeling used doesn’t mean you are.",
+      sub: "Before you assume bad intent, ask: “If they weren’t trying to use me, what else fits?”"
+    }
+  ];
+
+  function getDailyIndex(max) {
+    const today = new Date().toISOString().slice(0, 10);
+    let hash = 0;
+    for (let i = 0; i < today.length; i++) {
+      hash = (hash * 31 + today.charCodeAt(i)) >>> 0;
+    }
+    return hash % max;
+  }
+
+  function getDailySuggestions(count) {
+    const baseIndex = getDailyIndex(FUTURE_YOU_SUGGESTIONS.length);
+    const out = [];
+    for (let i = 0; i < count; i++) {
+      out.push(FUTURE_YOU_SUGGESTIONS[(baseIndex + i) % FUTURE_YOU_SUGGESTIONS.length]);
+    }
+    return out;
+  }
+
+  function updateFutureYouCard() {
+    const ul = document.getElementById("futureList");
+    if (!ul) return;
+    ul.innerHTML = "";
+    const list = getDailySuggestions(4);
+    list.forEach(text => {
+      const li = document.createElement("li");
+      li.textContent = text;
+      ul.appendChild(li);
+    });
+  }
+
+  function updateTodaysRule() {
+    const idx = getDailyIndex(RULES.length);
+    const rule = RULES[idx];
+    const mainEl = document.getElementById("ruleMain");
+    const subEl = document.getElementById("ruleSub");
+    if (!rule || !mainEl || !subEl) return;
+    mainEl.textContent = rule.main;
+    subEl.textContent = rule.sub;
+  }
+
+  function updateThreatFilter() {
+    const idx = getDailyIndex(THREAT_FILTERS.length);
+    const item = THREAT_FILTERS[idx];
+    const mainEl = document.getElementById("threatMain");
+    const subEl  = document.getElementById("threatSub");
+    if (!item || !mainEl || !subEl) return;
+    mainEl.textContent = item.main;
+    subEl.textContent  = item.sub;
+  }
+
+  function pad(n) {
+    return n.toString().padStart(2, "0");
+  }
+
+  function formatTime12(hours, minutes) {
+    const suffix = hours >= 12 ? "PM" : "AM";
+    let h12 = hours % 12;
+    if (h12 === 0) h12 = 12;
+    return `${h12}:${pad(minutes)} ${suffix}`;
+  }
+
+  function formatHM(sec) {
+    if (sec < 0) sec = 0;
+    return `${Math.floor(sec / 3600)}h ${Math.floor((sec % 3600) / 60)}m`;
+  }
+
+  function updateHeaderDate() {
+    const el = document.getElementById("headerDate");
+    const now = new Date();
+    const fmt = now.toLocaleDateString(undefined, {
+      month: "short",
+      day: "numeric",
+      year: "numeric"
+    }).replace(",", "");
+    el.textContent = fmt;
+  }
+
+  function update() {
+    const now = new Date();
+    const h = now.getHours(), m = now.getMinutes(), s = now.getSeconds();
+    const sec = h * 3600 + m * 60 + s;
+
+    // awake percent
+    let awakeElapsed =
+      sec <= wakeStartSeconds ? 0 :
+      sec >= wakeEndSeconds ? awakeSpanSeconds :
+      sec - wakeStartSeconds;
+
+    const percent = Math.round((awakeElapsed / awakeSpanSeconds) * 100);
+    document.getElementById("percentHeader").textContent =
+      `${percent}% of awake day`;
+
+    // bar position
+    const dayPct = (sec / SECONDS_IN_DAY) * 100;
+    document.getElementById("timeIndicator").textContent = formatTime12(h, m);
+    document.getElementById("timeIndicator").style.left = dayPct + "%";
+    document.getElementById("currentLine").style.left = dayPct + "%";
+    document.getElementById("pastOverlay").style.width = dayPct + "%";
+
+    // bed info
+    const bedInfo = document.getElementById("bedInfo");
+    const untilBed = wakeEndSeconds - sec;
+    bedInfo.textContent =
+      untilBed <= 0
+        ? "It's your bedtime"
+        : `Time until bed: ${formatHM(untilBed)}`;
+
+    // work info
+    const workInfo = document.getElementById("workInfo");
+    if (sec < workStartSeconds) {
+      workInfo.textContent =
+        `Work starts in: ${formatHM(workStartSeconds - sec)}`;
+    } else if (sec < workEndSeconds) {
+      workInfo.textContent =
+        `Time left at work: ${formatHM(workEndSeconds - sec)}`;
+    } else {
+      const untilBedAfterWork = untilBed;
+      if (untilBedAfterWork <= 0) {
+        workInfo.textContent = "Day complete";
+      } else if (untilBedAfterWork <= BED_WARNING_SECONDS) {
+        workInfo.textContent = "Get ready for bed";
+      } else {
+        workInfo.textContent =
+          `Free time: ${formatHM(untilBedAfterWork)}`;
+      }
+    }
+  }
+
+  updateHeaderDate();
+  updateFutureYouCard();
+  updateTodaysRule();
+  updateThreatFilter();
+  update();
+  setInterval(update, 1000);
+</script>
+
+</body>
+</html>
